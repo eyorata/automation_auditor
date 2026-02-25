@@ -48,5 +48,6 @@ class AgentState(TypedDict):
     rubric_dimensions: List[Dict]
     evidences: Annotated[Dict[str, List[Evidence]], operator.ior]
     opinions: Annotated[List[JudicialOpinion], operator.add]
+    node_errors: Annotated[List[str], operator.add]
+    flags: Annotated[Dict[str, bool], operator.ior]
     final_report: Optional[AuditReport]
-

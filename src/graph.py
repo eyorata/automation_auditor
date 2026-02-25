@@ -7,6 +7,8 @@ from langgraph.graph import END, START, StateGraph
 from src.nodes.detectives import (
     doc_analyst_node,
     evidence_aggregator_node,
+    error_collector_node,
+    insufficient_evidence_node,
     repo_investigator_node,
     vision_inspector_node,
 )
@@ -28,6 +30,8 @@ def build_interim_graph():
     builder.add_node("doc_analyst", doc_analyst_node)
     builder.add_node("vision_inspector", vision_inspector_node)
     builder.add_node("evidence_aggregator", evidence_aggregator_node)
+    builder.add_node("error_collector", error_collector_node)
+    builder.add_node("insufficient_evidence", insufficient_evidence_node)
 
     # Detective fan-out
     builder.add_edge(START, "repo_investigator")
@@ -39,7 +43,25 @@ def build_interim_graph():
     builder.add_edge("doc_analyst", "evidence_aggregator")
     builder.add_edge("vision_inspector", "evidence_aggregator")
 
-    builder.add_edge("evidence_aggregator", END)
+    def _route_after_aggregation(state: AgentState) -> str:
+        flags = state.get("flags", {})
+        if flags.get("has_node_errors", False):
+            return "error_collector"
+        if flags.get("insufficient_evidence", False):
+            return "insufficient_evidence"
+        return END
+
+    builder.add_conditional_edges(
+        "evidence_aggregator",
+        _route_after_aggregation,
+        {
+            "error_collector": "error_collector",
+            "insufficient_evidence": "insufficient_evidence",
+            END: END,
+        },
+    )
+    builder.add_edge("error_collector", END)
+    builder.add_edge("insufficient_evidence", END)
     return builder.compile()
 
 
@@ -52,7 +74,8 @@ def run_detective_graph(repo_url: str, pdf_path: str, rubric_path: str = "rubric
             "rubric_dimensions": load_rubric_dimensions(rubric_path),
             "evidences": {},
             "opinions": [],
+            "node_errors": [],
+            "flags": {},
             "final_report": None,
         }
     )
-

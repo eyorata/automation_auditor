@@ -74,3 +74,9 @@ def collect_doc_evidence(pdf_path: str) -> List[Evidence]:
         ),
     ]
 
+
+def cross_reference_claimed_paths(claimed_paths: List[str], repo_files: List[str]) -> dict:
+    repo_set = set(repo_files)
+    verified = [p for p in claimed_paths if p in repo_set]
+    hallucinated = [p for p in claimed_paths if p not in repo_set]
+    return {"verified_paths": verified, "hallucinated_paths": hallucinated}

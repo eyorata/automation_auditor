@@ -1,5 +1,6 @@
 import ast
 import json
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -15,15 +16,21 @@ def _run(cmd: List[str], cwd: Path | None = None) -> subprocess.CompletedProcess
         check=False,
         text=True,
         capture_output=True,
+        timeout=45,
     )
 
 
 def clone_repo(repo_url: str, destination: Path) -> Path:
+    if not re.match(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(\.git)?$", repo_url):
+        raise ValueError("Unsupported repo URL format. Expected a GitHub HTTPS URL.")
     destination.mkdir(parents=True, exist_ok=True)
     repo_path = destination / "target_repo"
     result = _run(["git", "clone", "--depth", "100", repo_url, str(repo_path)])
     if result.returncode != 0:
-        raise RuntimeError(f"git clone failed: {result.stderr.strip()}")
+        stderr = result.stderr.strip()
+        if "Authentication failed" in stderr or "Repository not found" in stderr:
+            raise RuntimeError(f"git clone auth/repo error: {stderr}")
+        raise RuntimeError(f"git clone failed: {stderr}")
     return repo_path
 
 
@@ -179,3 +186,10 @@ def collect_repo_evidence(repo_url: str) -> Dict[str, List[Evidence]]:
             ],
         }
 
+
+def classify_confidence_tier(confidence: float) -> str:
+    if confidence >= 0.85:
+        return "high"
+    if confidence >= 0.65:
+        return "medium"
+    return "low"

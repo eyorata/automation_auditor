@@ -9,16 +9,21 @@ This repository contains the interim implementation of a LangGraph-based forensi
   - sandboxed clone via `tempfile.TemporaryDirectory()`
   - git history extraction
   - AST-based graph and state analysis
+  - URL validation, timeout-bounded subprocess execution, and auth-aware clone errors
 - PDF tooling in `src/tools/doc_tools.py`:
   - PDF ingestion
   - chunked querying utility
   - report file-claim extraction
+  - claimed-path cross-reference helper against repo inventory
 - Detective nodes in `src/nodes/detectives.py`:
   - `repo_investigator_node`
   - `doc_analyst_node`
   - `vision_inspector_node` (scaffolded implementation)
   - `evidence_aggregator_node`
+  - `error_collector_node`
+  - `insufficient_evidence_node`
 - Partial graph in `src/graph.py` with detective fan-out/fan-in.
+  - conditional edges for error collection and insufficient evidence handling
 
 ## Setup
 
@@ -45,4 +50,3 @@ uv run python -c "from src.graph import run_detective_graph; import json; result
 
 - Interim report PDF is committed at `reports/interim_report.pdf`.
 - Rubric constitution is in `rubric.json`.
-
