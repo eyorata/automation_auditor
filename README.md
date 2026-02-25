@@ -46,6 +46,17 @@ cp .env.example .env
 uv run python -c "from src.graph import run_detective_graph; import json; result = run_detective_graph('https://github.com/owner/repo.git', 'reports/interim_report.pdf'); print(json.dumps(result, default=str, indent=2))"
 ```
 
+## Cool Feature: Audit Snapshot Generator
+
+Generate a timestamped JSON result and a readable markdown snapshot (includes Mermaid architecture and evidence summary):
+
+```bash
+uv run automation-auditor audit-snapshot --repo-url https://github.com/owner/repo.git --pdf-path reports/interim_report.pdf
+```
+
+Default output directory:
+- `audit/generated/`
+
 ## Required artifacts
 
 - Interim report PDF is committed at `reports/interim_report.pdf`.
