@@ -1,104 +1,164 @@
-# Automaton Auditor Week 2 - Interim Report
+# Interim Submission Report
 
-## 1. Executive Summary
-This interim submission implements a production-oriented detective layer for the Automaton Auditor.
-The current system can clone a target repository in an isolated temporary directory, extract git history, parse project structure with AST-based checks, and ingest a PDF report for chunked analysis.
-The LangGraph topology is implemented with detective fan-out and evidence fan-in, ready for judicial layer integration.
+## Automaton Auditor - Digital Courtroom
+Constitutional Multi-Agent Governance System
 
-## 2. Architecture Decisions
+## 1. Project Overview
+Automaton Auditor is an autonomous governance system for auditing a target GitHub repository and its associated PDF report using a structured LangGraph workflow.
 
-### 2.1 Why Pydantic + TypedDict over plain dict
-- We use `Pydantic` models (`Evidence`, `JudicialOpinion`, `AuditReport`) to enforce schema-level guarantees and reduce downstream parsing errors.
-- We use `TypedDict` for `AgentState` to keep LangGraph state explicit and compatible with reducers.
-- We use reducers in state:
-  - `operator.ior` for evidence maps so parallel nodes can merge dimension-keyed evidence.
-  - `operator.add` for opinion lists in the upcoming judicial layer.
-- Rationale: plain nested dicts become brittle in parallel graph execution and are harder to validate and audit.
+The interim milestone prioritizes:
+- Forensic evidence quality
+- Typed state safety under parallel execution
+- Sandboxed repository inspection
+- Explicit non-happy-path governance
 
-### 2.2 AST-first forensic strategy
-- We explicitly avoid regex-only checks for structural verification.
-- `src/tools/repo_tools.py` uses Python `ast` to detect:
-  - `StateGraph` builder assignment.
-  - `add_edge` and `add_conditional_edges` call patterns.
-  - fan-out indicators through out-degree analysis.
-- We also parse `src/state.py` with AST to verify presence of `BaseModel` and `TypedDict` definitions.
-- Rationale: AST checks are more resistant to formatting variations and produce stronger evidence quality.
+Current enforced capabilities:
+- Parallel detective fan-out (`RepoInvestigator`, `DocAnalyst`, `VisionInspector` scaffold)
+- Evidence fan-in through an aggregator node
+- Typed contracts using Pydantic + reducer-safe `AgentState`
+- Sandboxed clone and structural inspection tooling
+- Conditional routing for node failure and low-evidence conditions
 
-### 2.3 Sandboxing strategy for repository inspection
-- Repository cloning runs in `tempfile.TemporaryDirectory()` to prevent unknown code from polluting the live workspace.
-- `subprocess.run(..., capture_output=True, check=False)` is used for command execution with explicit return-code checks.
-- Failures raise structured exceptions (e.g., clone/authentication failures).
-- Rationale: this is safer and easier to reason about than `os.system`-based shell execution.
+Core invariant (interim scope):
+`START -> Detectives (parallel) -> EvidenceAggregator -> [ErrorCollector | InsufficientEvidence | END]`
 
-## 3. Current StateGraph (Interim)
-- Implemented graph nodes:
-  - `RepoInvestigator`
-  - `DocAnalyst`
-  - `VisionInspector` (scaffolded; execution optional this phase)
-  - `EvidenceAggregator`
-- Implemented topology:
-  - Parallel detective fan-out from `START`.
-  - Fan-in aggregation before `END`.
+## 2. Comparison and Improvement Notes
+Compared with the earlier placeholder-style report and the stronger reference format, this report is upgraded in three ways:
 
-### 3.1 Diagram - Planned and Current Detective Flow
+1. Claim-to-code traceability: all major claims map to existing files/functions.
+2. Scope correctness: implemented behavior is separated from final-phase plans.
+3. Governance clarity: error paths and evidence-quality controls are explicit.
+
+## 3. Architecture Decision Rationale
+
+### A. Typed State with Pydantic + TypedDict + Reducers
+Decision:
+- Use Pydantic `BaseModel` contracts for domain objects.
+- Use `TypedDict` for shared graph state with `Annotated` reducers.
+
+Why:
+- Prevents malformed payloads from silently propagating.
+- Preserves correctness when parallel branches write to state.
+- Increases reproducibility and audit traceability.
+
+Implementation:
+- `evidences`: `operator.ior`
+- `opinions`: `operator.add`
+- `node_errors`: `operator.add`
+- `flags`: `operator.ior`
+
+Trade-off:
+- Slight verbosity versus free dicts, in exchange for much stronger reliability.
+
+### B. AST Parsing Over Regex
+Decision:
+- Use Python AST to verify structure in graph and state files.
+
+Why:
+- Regex is brittle to formatting, aliasing, and multiline patterns.
+- AST inspects semantics and wiring, not just text presence.
+
+Implementation examples:
+- Detect `StateGraph` builder assignment.
+- Extract `add_edge` / `add_conditional_edges` patterns.
+- Verify typed schema classes and reducer markers.
+
+Trade-off:
+- Small parsing overhead; acceptable for higher forensic confidence.
+
+### C. Sandboxed Repository Cloning
+Decision:
+- Clone into `tempfile.TemporaryDirectory()` and inspect only.
+- Use `subprocess.run` with return-code checks and timeout.
+- Disallow unsafe execution patterns (`os.system` not used).
+
+Why:
+- Target repositories are untrusted input.
+- Isolation prevents workspace pollution and reduces execution risk.
+
+Trade-off:
+- Fresh clone per run costs time but improves safety and determinism.
+
+## 4. StateGraph Architecture (Interim Implemented)
+
+Implemented nodes:
+- `RepoInvestigator`
+- `DocAnalyst`
+- `VisionInspector` (implementation scaffold; execution optional)
+- `EvidenceAggregator`
+- `ErrorCollector`
+- `InsufficientEvidence`
+
+Flow diagram:
 ```text
 START
   |---> RepoInvestigator ----\
-  |---> DocAnalyst -----------> EvidenceAggregator ---> END
-  |---> VisionInspector -----/
+  |---> DocAnalyst -----------> EvidenceAggregator ---> [conditional] ---> END
+  |---> VisionInspector -----/                  |
+                                                +--> ErrorCollector ---> END
+                                                +--> InsufficientEvidence -> END
 ```
 
-### 3.2 Planned Final Flow (for Saturday milestone)
-```text
-START
-  |---> RepoInvestigator ----\
-  |---> DocAnalyst -----------> EvidenceAggregator ---> +--> Prosecutor --\
-  |---> VisionInspector -----/                         +--> Defense -------> ChiefJustice --> END
-                                                      +--> TechLead -----/
-```
+Data contracts on transitions:
+- Detectives -> Aggregator: `Dict[str, List[Evidence]]`
+- Aggregator -> conditional routes: flags + aggregated evidence
+- Planned final (not yet implemented): Judges -> ChiefJustice -> `AuditReport`
 
-## 4. Known Gaps and Concrete Plan
+## 5. Error Handling and Governance Controls
+Implemented controls:
+- Detective exceptions are captured as structured `Evidence`.
+- Node failures are accumulated in `node_errors`.
+- Aggregator sets flags:
+  - `has_node_errors`
+  - `insufficient_evidence`
+- Conditional routing ensures graceful completion with governed non-happy paths.
 
-### 4.1 Missing judicial layer
-Gap:
-- `src/nodes/judges.py` is not implemented yet.
+Benefits:
+- No silent failures
+- Better debugging/auditability
+- More deterministic behavior under partial failure
 
-Plan:
-1. Add three persona-specific judge nodes (Prosecutor, Defense, TechLead).
-2. Enforce structured output via `with_structured_output(JudicialOpinion)`.
-3. Add parser-retry logic for malformed outputs.
-4. Run judges in parallel on the same evidence per criterion.
+## 6. Forensic Tooling Snapshot
+- `src/tools/repo_tools.py`
+  - GitHub URL guardrails
+  - sandboxed clone
+  - git history extraction
+  - AST graph/state analysis
+  - timeout-aware subprocess execution
+- `src/tools/doc_tools.py`
+  - PDF ingestion + chunking
+  - chunk query helper
+  - claimed-path extraction
+  - cross-reference helper against repo inventory evidence
+- `src/nodes/detectives.py`
+  - exception-safe detective nodes with structured evidence outputs
 
-### 4.2 Missing deterministic synthesis engine
-Gap:
-- `src/nodes/justice.py` is not implemented yet.
+## 7. Known Gaps (Interim Accurate)
+Not implemented yet:
+- `src/nodes/judges.py` judicial persona layer
+- `src/nodes/justice.py` deterministic chief-justice synthesis
+- End-to-end markdown final audit report generation
 
-Plan:
-1. Implement `ChiefJusticeNode` with deterministic Python rules:
-   - security override
-   - fact supremacy
-   - functionality weighting
-   - dissent requirement
-2. Add variance-based re-evaluation (`score variance > 2`).
-3. Serialize final `AuditReport` to markdown output.
+## 8. Forward Plan (Toward Final Milestone)
+1. Implement judge nodes (Prosecutor, Defense, TechLead) with structured `JudicialOpinion`.
+2. Add retry path for malformed outputs and bounds/citation validation.
+3. Implement deterministic synthesis rules:
+   - Security override
+   - Fact supremacy
+   - Functionality weighting
+   - Dissent requirement
+   - Variance re-evaluation
+4. Expand graph with judicial fan-out/fan-in and retry/error edges.
+5. Serialize final `AuditReport` to markdown artifacts under `audit/`.
 
-### 4.3 Missing end-to-end courtroom graph
-Gap:
-- Current `src/graph.py` contains only the interim detective pipeline.
+## 9. Risk Register
+| Risk | Mitigation |
+|---|---|
+| Node failure during evidence collection | Catch exceptions, emit error evidence, route to `ErrorCollector`. |
+| Insufficient evidence but high-confidence narrative | Evidence count checks and `InsufficientEvidence` route. |
+| Hallucinated report path claims | Cross-reference claimed paths against repo inventory evidence. |
+| Structural false positives | AST-first checks rather than regex-only matching. |
 
-Plan:
-1. Add judicial fan-out/fan-in after `EvidenceAggregator`.
-2. Add conditional edges for evidence-missing and node-failure routes.
-3. Add end-to-end run path from input artifacts to generated markdown report.
-
-## 5. Validation Status
-- `src/state.py` contains typed models and reducers.
-- `src/tools/repo_tools.py` includes sandboxed clone, git log extraction, and AST graph analysis.
-- `src/tools/doc_tools.py` includes PDF ingestion + chunked query helper.
-- `src/nodes/detectives.py` outputs structured `Evidence` objects.
-- `src/graph.py` compiles as a partial parallel detective graph with evidence fan-in.
-
-## 6. Submission Note
-This interim report reflects the state of the repository at the interim checkpoint.
-The final submission will extend this architecture into full dialectical judicial orchestration and deterministic synthesis.
+## 10. Conclusion
+This interim submission is technically sound for the detective phase: typed, parallel, and safety-conscious. The architecture now documents not only the happy path but also governed failure handling, while clearly separating completed features from final-phase courtroom synthesis work.
 
