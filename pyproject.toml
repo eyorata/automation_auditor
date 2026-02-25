@@ -1,0 +1,22 @@
+[project]
+name = "automation-auditor"
+version = "0.1.0"
+description = "Week 2 Automaton Auditor interim submission"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "langgraph>=0.2.0",
+  "langchain>=0.3.0",
+  "langchain-openai>=0.2.0",
+  "pydantic>=2.7.0",
+  "pypdf>=5.0.0",
+  "python-dotenv>=1.0.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []
+

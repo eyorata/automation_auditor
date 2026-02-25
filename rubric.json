@@ -1,0 +1,58 @@
+{
+  "rubric_metadata": {
+    "rubric_name": "Week 2: The Automaton Auditor Self-Evaluation",
+    "version": "3.0.0"
+  },
+  "dimensions": [
+    {
+      "id": "git_forensic_analysis",
+      "name": "Git Forensic Analysis",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Run git log in reverse and inspect progression quality."
+    },
+    {
+      "id": "state_management_rigor",
+      "name": "State Management Rigor",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify Pydantic and TypedDict state with Annotated reducers."
+    },
+    {
+      "id": "graph_orchestration",
+      "name": "Graph Orchestration Architecture",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify detective fan-out and fan-in synchronization in graph wiring."
+    },
+    {
+      "id": "safe_tool_engineering",
+      "name": "Safe Tool Engineering",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Ensure sandboxed git tooling with tempfile and subprocess error handling."
+    },
+    {
+      "id": "theoretical_depth",
+      "name": "Theoretical Depth (Documentation)",
+      "target_artifact": "pdf_report",
+      "forensic_instruction": "Check substantive explanation of Dialectical Synthesis and Fan-In/Fan-Out."
+    },
+    {
+      "id": "report_accuracy",
+      "name": "Report Accuracy (Cross-Reference)",
+      "target_artifact": "pdf_report",
+      "forensic_instruction": "Cross-reference claimed file paths in report against repository files."
+    },
+    {
+      "id": "swarm_visual",
+      "name": "Architectural Diagram Analysis",
+      "target_artifact": "pdf_images",
+      "forensic_instruction": "Confirm diagrams depict parallel detective and judge branches."
+    }
+  ],
+  "synthesis_rules": {
+    "security_override": "Confirmed security flaws cap score at 3.",
+    "fact_supremacy": "Forensic evidence overrules unsupported opinions.",
+    "functionality_weight": "Tech Lead assessment has highest architecture weight.",
+    "dissent_requirement": "Variance over 2 requires explicit dissent summary.",
+    "variance_re_evaluation": "High variance triggers evidence re-check."
+  }
+}
+
