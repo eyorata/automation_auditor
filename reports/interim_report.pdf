@@ -1,21 +1,181 @@
-%PDF-1.1
-1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
-2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
-3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
-4 0 obj<< /Length 149 >>stream
-BT /F1 12 Tf 72 730 Td (Automaton Auditor - Interim Report Placeholder) Tj 0 -20 Td (Replace this file with your authored interim PDF before final grading.) Tj ET
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 3052 >>
+stream
+BT
+/F1 11 Tf
+54 760 Td
+(# Automaton Auditor Week 2 - Interim Report) Tj
+0 -14 Td () Tj
+0 -14 Td (## 1. Executive Summary) Tj
+0 -14 Td (This interim submission implements a production-oriented detective layer for the Automaton) Tj
+0 -14 Td (Auditor.) Tj
+0 -14 Td (The current system can clone a target repository in an isolated temporary directory, extract) Tj
+0 -14 Td (git history, parse project structure with AST-based checks, and ingest a PDF report for chunked) Tj
+0 -14 Td (analysis.) Tj
+0 -14 Td (The LangGraph topology is implemented with detective fan-out and evidence fan-in, ready for) Tj
+0 -14 Td (judicial layer integration.) Tj
+0 -14 Td () Tj
+0 -14 Td (## 2. Architecture Decisions) Tj
+0 -14 Td () Tj
+0 -14 Td (### 2.1 Why Pydantic + TypedDict over plain dict) Tj
+0 -14 Td (- We use `Pydantic` models \(`Evidence`, `JudicialOpinion`, `AuditReport`\) to enforce) Tj
+0 -14 Td (schema-level guarantees and reduce downstream parsing errors.) Tj
+0 -14 Td (- We use `TypedDict` for `AgentState` to keep LangGraph state explicit and compatible with) Tj
+0 -14 Td (reducers.) Tj
+0 -14 Td (- We use reducers in state:) Tj
+0 -14 Td (  - `operator.ior` for evidence maps so parallel nodes can merge dimension-keyed evidence.) Tj
+0 -14 Td (  - `operator.add` for opinion lists in the upcoming judicial layer.) Tj
+0 -14 Td (- Rationale: plain nested dicts become brittle in parallel graph execution and are harder to) Tj
+0 -14 Td (validate and audit.) Tj
+0 -14 Td () Tj
+0 -14 Td (### 2.2 AST-first forensic strategy) Tj
+0 -14 Td (- We explicitly avoid regex-only checks for structural verification.) Tj
+0 -14 Td (- `src/tools/repo_tools.py` uses Python `ast` to detect:) Tj
+0 -14 Td (  - `StateGraph` builder assignment.) Tj
+0 -14 Td (  - `add_edge` and `add_conditional_edges` call patterns.) Tj
+0 -14 Td (  - fan-out indicators through out-degree analysis.) Tj
+0 -14 Td (- We also parse `src/state.py` with AST to verify presence of `BaseModel` and `TypedDict`) Tj
+0 -14 Td (definitions.) Tj
+0 -14 Td (- Rationale: AST checks are more resistant to formatting variations and produce stronger) Tj
+0 -14 Td (evidence quality.) Tj
+0 -14 Td () Tj
+0 -14 Td (### 2.3 Sandboxing strategy for repository inspection) Tj
+0 -14 Td (- Repository cloning runs in `tempfile.TemporaryDirectory\(\)` to prevent unknown code from) Tj
+0 -14 Td (polluting the live workspace.) Tj
+0 -14 Td (- `subprocess.run\(..., capture_output=True, check=False\)` is used for command execution with) Tj
+0 -14 Td (explicit return-code checks.) Tj
+0 -14 Td (- Failures raise structured exceptions \(e.g., clone/authentication failures\).) Tj
+0 -14 Td (- Rationale: this is safer and easier to reason about than `os.system`-based shell execution.) Tj
+0 -14 Td () Tj
+0 -14 Td (## 3. Current StateGraph \(Interim\)) Tj
+0 -14 Td (- Implemented graph nodes:) Tj
+0 -14 Td (  - `RepoInvestigator`) Tj
+0 -14 Td (  - `DocAnalyst`) Tj
+0 -14 Td (  - `VisionInspector` \(scaffolded; execution optional this phase\)) Tj
+0 -14 Td (  - `EvidenceAggregator`) Tj
+0 -14 Td (- Implemented topology:) Tj
+ET
 endstream
 endobj
-5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 2229 >>
+stream
+BT
+/F1 11 Tf
+54 760 Td
+(  - Parallel detective fan-out from `START`.) Tj
+0 -14 Td (  - Fan-in aggregation before `END`.) Tj
+0 -14 Td () Tj
+0 -14 Td (### 3.1 Diagram - Planned and Current Detective Flow) Tj
+0 -14 Td () Tj
+0 -14 Td (START) Tj
+0 -14 Td (  |---> RepoInvestigator ----\\) Tj
+0 -14 Td (  |---> DocAnalyst -----------> EvidenceAggregator ---> END) Tj
+0 -14 Td (  |---> VisionInspector -----/) Tj
+0 -14 Td () Tj
+0 -14 Td () Tj
+0 -14 Td (### 3.2 Planned Final Flow \(for Saturday milestone\)) Tj
+0 -14 Td () Tj
+0 -14 Td (START) Tj
+0 -14 Td (  |---> RepoInvestigator ----\\) Tj
+0 -14 Td (  |---> DocAnalyst -----------> EvidenceAggregator ---> +--> Prosecutor --\\) Tj
+0 -14 Td (  |---> VisionInspector -----/                         +--> Defense -------> ChiefJustice -->) Tj
+0 -14 Td (END) Tj
+0 -14 Td (                                                      +--> TechLead -----/) Tj
+0 -14 Td () Tj
+0 -14 Td () Tj
+0 -14 Td (## 4. Known Gaps and Concrete Plan) Tj
+0 -14 Td () Tj
+0 -14 Td (### 4.1 Missing judicial layer) Tj
+0 -14 Td (Gap:) Tj
+0 -14 Td (- `src/nodes/judges.py` is not implemented yet.) Tj
+0 -14 Td () Tj
+0 -14 Td (Plan:) Tj
+0 -14 Td (1. Add three persona-specific judge nodes \(Prosecutor, Defense, TechLead\).) Tj
+0 -14 Td (2. Enforce structured output via `with_structured_output\(JudicialOpinion\)`.) Tj
+0 -14 Td (3. Add parser-retry logic for malformed outputs.) Tj
+0 -14 Td (4. Run judges in parallel on the same evidence per criterion.) Tj
+0 -14 Td () Tj
+0 -14 Td (### 4.2 Missing deterministic synthesis engine) Tj
+0 -14 Td (Gap:) Tj
+0 -14 Td (- `src/nodes/justice.py` is not implemented yet.) Tj
+0 -14 Td () Tj
+0 -14 Td (Plan:) Tj
+0 -14 Td (1. Implement `ChiefJusticeNode` with deterministic Python rules:) Tj
+0 -14 Td (   - security override) Tj
+0 -14 Td (   - fact supremacy) Tj
+0 -14 Td (   - functionality weighting) Tj
+0 -14 Td (   - dissent requirement) Tj
+0 -14 Td (2. Add variance-based re-evaluation \(`score variance > 2`\).) Tj
+0 -14 Td (3. Serialize final `AuditReport` to markdown output.) Tj
+0 -14 Td () Tj
+0 -14 Td (### 4.3 Missing end-to-end courtroom graph) Tj
+0 -14 Td (Gap:) Tj
+0 -14 Td (- Current `src/graph.py` contains only the interim detective pipeline.) Tj
+0 -14 Td () Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 1118 >>
+stream
+BT
+/F1 11 Tf
+54 760 Td
+(Plan:) Tj
+0 -14 Td (1. Add judicial fan-out/fan-in after `EvidenceAggregator`.) Tj
+0 -14 Td (2. Add conditional edges for evidence-missing and node-failure routes.) Tj
+0 -14 Td (3. Add end-to-end run path from input artifacts to generated markdown report.) Tj
+0 -14 Td () Tj
+0 -14 Td (## 5. Validation Status) Tj
+0 -14 Td (- `src/state.py` contains typed models and reducers.) Tj
+0 -14 Td (- `src/tools/repo_tools.py` includes sandboxed clone, git log extraction, and AST graph) Tj
+0 -14 Td (analysis.) Tj
+0 -14 Td (- `src/tools/doc_tools.py` includes PDF ingestion + chunked query helper.) Tj
+0 -14 Td (- `src/nodes/detectives.py` outputs structured `Evidence` objects.) Tj
+0 -14 Td (- `src/graph.py` compiles as a partial parallel detective graph with evidence fan-in.) Tj
+0 -14 Td () Tj
+0 -14 Td (## 6. Submission Note) Tj
+0 -14 Td (This interim report reflects the state of the repository at the interim checkpoint.) Tj
+0 -14 Td (The final submission will extend this architecture into full dialectical judicial orchestration) Tj
+0 -14 Td (and deterministic synthesis.) Tj
+0 -14 Td () Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
 xref
-0 6
+0 10
 0000000000 65535 f 
-0000000010 00000 n 
-0000000063 00000 n 
-0000000120 00000 n 
-0000000266 00000 n 
-0000000465 00000 n 
-trailer<< /Size 6 /Root 1 0 R >>
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000003357 00000 n 
+0000003483 00000 n 
+0000005764 00000 n 
+0000005890 00000 n 
+0000007060 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
 startxref
-535
+7130
 %%EOF
