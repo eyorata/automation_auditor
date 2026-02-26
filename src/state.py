@@ -50,4 +50,7 @@ class AgentState(TypedDict):
     opinions: Annotated[List[JudicialOpinion], operator.add]
     node_errors: Annotated[List[str], operator.add]
     flags: Annotated[Dict[str, bool], operator.ior]
+    report_output_path: str
+    trace_url: Optional[str]
+    final_report_markdown: Optional[str]
     final_report: Optional[AuditReport]

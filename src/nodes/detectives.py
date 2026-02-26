@@ -1,7 +1,12 @@
 from typing import Dict, List
 
 from src.state import AgentState, Evidence
-from src.tools.doc_tools import collect_doc_evidence, cross_reference_claimed_paths, extract_claimed_paths
+from src.tools.doc_tools import (
+    collect_doc_evidence,
+    cross_reference_claimed_paths,
+    extract_claimed_paths,
+    extract_images_from_pdf,
+)
 from src.tools.repo_tools import classify_confidence_tier, collect_repo_evidence
 
 
@@ -42,21 +47,33 @@ def doc_analyst_node(state: AgentState) -> Dict[str, object]:
         }
 
 
-def vision_inspector_node(_state: AgentState) -> Dict[str, Dict[str, List[Evidence]]]:
-    return {
-        "evidences": {
-            "pdf_images": [
-                Evidence(
-                    goal="Extract and inspect architectural diagrams",
-                    found=False,
-                    content="Vision analysis is scaffolded but not executed in interim scope.",
-                    location="src/nodes/detectives.py",
-                    rationale="Interim submission requires implementation readiness; execution is optional.",
-                    confidence=0.6,
-                )
-            ]
+def vision_inspector_node(state: AgentState) -> Dict[str, Dict[str, List[Evidence]]]:
+    try:
+        extracted = extract_images_from_pdf(state["pdf_path"])
+        return {
+            "evidences": {
+                "pdf_images": [
+                    Evidence(
+                        goal="Extract and inspect architectural diagrams",
+                        found=len(extracted) > 0,
+                        content="\n".join(extracted[:20]) if extracted else "No images extracted from PDF.",
+                        location=state["pdf_path"],
+                        rationale=(
+                            "Image extraction is implemented. Multimodal model-based inspection is optional and "
+                            "can be added when a vision-capable model key is configured."
+                        ),
+                        confidence=0.7 if extracted else 0.55,
+                    )
+                ]
+            }
         }
-    }
+    except Exception as exc:
+        msg = f"vision_inspector failed: {exc}"
+        return {
+            "evidences": {"vision_inspector_error": [_error_evidence("vision_inspector", msg)]},
+            "node_errors": [msg],
+            "flags": {"vision_inspector_failed": True},
+        }
 
 
 def evidence_aggregator_node(state: AgentState) -> Dict[str, object]:

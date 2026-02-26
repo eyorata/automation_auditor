@@ -1,4 +1,6 @@
+import hashlib
 import re
+import tempfile
 from pathlib import Path
 from typing import List
 
@@ -80,3 +82,25 @@ def cross_reference_claimed_paths(claimed_paths: List[str], repo_files: List[str
     verified = [p for p in claimed_paths if p in repo_set]
     hallucinated = [p for p in claimed_paths if p not in repo_set]
     return {"verified_paths": verified, "hallucinated_paths": hallucinated}
+
+
+def extract_images_from_pdf(path: str, output_dir: str | None = None) -> List[str]:
+    pdf_path = Path(path)
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF not found: {path}")
+
+    out_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="automaton_auditor_images_"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    reader = PdfReader(str(pdf_path))
+    saved: List[str] = []
+
+    for page_i, page in enumerate(reader.pages):
+        images = getattr(page, "images", [])
+        for img_i, img in enumerate(images):
+            ext = img.name.split(".")[-1] if "." in img.name else "bin"
+            data = img.data
+            digest = hashlib.md5(data).hexdigest()[:10]
+            out = out_dir / f"page{page_i+1}_img{img_i+1}_{digest}.{ext}"
+            out.write_bytes(data)
+            saved.append(str(out))
+    return saved
