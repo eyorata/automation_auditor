@@ -1,63 +1,107 @@
-# Automaton Auditor (Week 2 Interim)
+# Automaton Auditor - Digital Courtroom (Final Delivery)
 
-This repository contains the interim implementation of a LangGraph-based forensic auditor swarm.
+LangGraph-based autonomous governance system for auditing a target GitHub repository plus an accompanying PDF report.
 
-## Implemented interim scope
+## What This Repository Implements
 
-- Typed state schema in `src/state.py` using Pydantic and `TypedDict` with reducers.
-- Forensic repo tools in `src/tools/repo_tools.py`:
-  - sandboxed clone via `tempfile.TemporaryDirectory()`
-  - git history extraction
-  - AST-based graph and state analysis
-  - URL validation, timeout-bounded subprocess execution, and auth-aware clone errors
-- PDF tooling in `src/tools/doc_tools.py`:
-  - PDF ingestion
-  - chunked querying utility
-  - report file-claim extraction
-  - claimed-path cross-reference helper against repo inventory
-- Detective nodes in `src/nodes/detectives.py`:
-  - `repo_investigator_node`
-  - `doc_analyst_node`
-  - `vision_inspector_node` (scaffolded implementation)
-  - `evidence_aggregator_node`
-  - `error_collector_node`
-  - `insufficient_evidence_node`
-- Partial graph in `src/graph.py` with detective fan-out/fan-in.
-  - conditional edges for error collection and insufficient evidence handling
+- Typed governance state and contracts in `src/state.py`
+- Forensic repo analysis tools in `src/tools/repo_tools.py`
+- PDF ingestion, claim extraction, and image extraction in `src/tools/doc_tools.py`
+- Detective nodes in `src/nodes/detectives.py`
+- Judicial layer in `src/nodes/judges.py` using `.with_structured_output(JudicialOpinion)`
+- Deterministic synthesis in `src/nodes/justice.py`
+- Complete orchestrated graph in `src/graph.py`
+- CLI runner in `src/cli.py`
+
+## Architecture
+
+```mermaid
+flowchart TD
+    S([START])
+    RI[RepoInvestigator]
+    DA[DocAnalyst]
+    VI[VisionInspector]
+    EA[EvidenceAggregator]
+    JD[JudgeDispatch]
+    P[Prosecutor]
+    D[Defense]
+    T[TechLead]
+    JA[JudgeAggregator]
+    RJ[RetryJudge]
+    CJ[ChiefJustice]
+    EC[ErrorCollector]
+    IE[InsufficientEvidence]
+    E([END])
+
+    S --> RI
+    S --> DA
+    S --> VI
+    RI --> EA
+    DA --> EA
+    VI --> EA
+    EA -->|node error| EC
+    EA -->|insufficient evidence| IE
+    EA -->|ready| JD
+    JD --> P
+    JD --> D
+    JD --> T
+    P --> JA
+    D --> JA
+    T --> JA
+    JA -->|invalid output| RJ
+    JA -->|valid output| CJ
+    RJ --> CJ
+    EC --> RJ
+    IE --> RJ
+    CJ --> E
+```
 
 ## Setup
 
-1. Install `uv` if needed.
-2. Create and sync environment:
+1. Install dependencies with uv:
 
 ```bash
 uv sync
 ```
 
-3. Configure environment variables:
+2. Configure environment:
 
 ```bash
 cp .env.example .env
 ```
 
-## Run detective graph
+3. Set at least:
+- `OPENAI_API_KEY` (optional for deterministic fallback mode, recommended for judge LLM execution)
+- `LANGCHAIN_API_KEY` and `LANGCHAIN_TRACING_V2=true` for LangSmith tracing
+
+## Run
+
+Run a full audit and produce output artifacts:
 
 ```bash
-uv run python -c "from src.graph import run_detective_graph; import json; result = run_detective_graph('https://github.com/owner/repo.git', 'reports/interim_report.pdf'); print(json.dumps(result, default=str, indent=2))"
+uv run automation-auditor audit-snapshot \
+  --repo-url https://github.com/owner/repo.git \
+  --pdf-path reports/final_report.pdf \
+  --output-dir audit/generated
 ```
 
-## Cool Feature: Audit Snapshot Generator
+Outputs:
+- Timestamped JSON run result
+- Snapshot markdown
+- Rendered audit report markdown (serialization of `AuditReport`)
 
-Generate a timestamped JSON result and a readable markdown snapshot (includes Mermaid architecture and evidence summary):
+## Required Delivery Artifacts
 
-```bash
-uv run automation-auditor audit-snapshot --repo-url https://github.com/owner/repo.git --pdf-path reports/interim_report.pdf
-```
+- Final PDF report: `reports/final_report.pdf`
+- Generated markdown reports:
+  - `audit/report_onself_generated/`
+  - `audit/report_onpeer_generated/`
+  - `audit/report_bypeer_received/`
+- Rubric constitution: `rubric.json`
+- Dependency lock: `uv.lock`
 
-Default output directory:
-- `audit/generated/`
+## LangSmith Trace
 
-## Required artifacts
+- Add your trace link in `.env` via `LANGSMITH_TRACE_URL`
+- Share the link in final submission notes once you run a traced end-to-end audit.
 
-- Interim report PDF is committed at `reports/interim_report.pdf`.
-- Rubric constitution is in `rubric.json`.

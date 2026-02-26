@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
   "langgraph>=0.2.0",
   "langchain>=0.3.0",
+  "langchain-core>=0.3.0",
   "langchain-openai>=0.2.0",
   "pydantic>=2.7.0",
   "pypdf>=5.0.0",
@@ -19,6 +20,3 @@ automation-auditor = "src.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv]
-dev-dependencies = []

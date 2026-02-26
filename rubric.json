@@ -29,6 +29,24 @@
       "forensic_instruction": "Ensure sandboxed git tooling with tempfile and subprocess error handling."
     },
     {
+      "id": "structured_output_enforcement",
+      "name": "Structured Output Enforcement",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify judges use structured outputs bound to JudicialOpinion and retry on parse issues."
+    },
+    {
+      "id": "judicial_nuance",
+      "name": "Judicial Nuance and Dialectics",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify distinct Prosecutor/Defense/TechLead personas with conflicting reasoning styles."
+    },
+    {
+      "id": "chief_justice_synthesis",
+      "name": "Chief Justice Synthesis Engine",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify deterministic conflict resolution rules and markdown report serialization."
+    },
+    {
       "id": "theoretical_depth",
       "name": "Theoretical Depth (Documentation)",
       "target_artifact": "pdf_report",
@@ -55,4 +73,3 @@
     "variance_re_evaluation": "High variance triggers evidence re-check."
   }
 }
-

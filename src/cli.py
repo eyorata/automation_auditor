@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.graph import run_detective_graph
+from src.graph import run_full_audit
 
 
 MERMAID_ARCH = """```mermaid
@@ -14,6 +14,13 @@ flowchart TD
     DA[DocAnalyst]
     VI[VisionInspector]
     EA[EvidenceAggregator]
+    JD[JudgeDispatch]
+    P[Prosecutor]
+    D[Defense]
+    T[TechLead]
+    JA[JudgeAggregator]
+    RJ[RetryJudge]
+    CJ[ChiefJustice]
     EC[ErrorCollector]
     IE[InsufficientEvidence]
     E([END])
@@ -24,11 +31,21 @@ flowchart TD
     RI --> EA
     DA --> EA
     VI --> EA
-    EA -->|has_node_errors| EC
-    EA -->|insufficient_evidence| IE
-    EA -->|healthy path| E
-    EC --> E
-    IE --> E
+    EA -->|node error| EC
+    EA -->|insufficient evidence| IE
+    EA -->|ready| JD
+    JD --> P
+    JD --> D
+    JD --> T
+    P --> JA
+    D --> JA
+    T --> JA
+    JA -->|invalid output| RJ
+    JA -->|valid output| CJ
+    RJ --> CJ
+    EC --> RJ
+    IE --> RJ
+    CJ --> E
 ```
 """
 
@@ -52,7 +69,7 @@ def _collect_evidence_summary(evidences: Dict[str, List[Dict[str, Any]]]) -> Dic
     return {"counts": counts, "total_items": len(all_items), "average_confidence": round(avg_conf, 3)}
 
 
-def _build_markdown(
+def _build_snapshot_markdown(
     repo_url: str,
     pdf_path: str,
     result: Dict[str, Any],
@@ -89,19 +106,6 @@ def _build_markdown(
     for key, count in sorted(summary["counts"].items()):
         lines.append(f"- `{key}`: {count}")
 
-    if node_errors:
-        lines.extend(["", "## Node Errors", ""])
-        for err in node_errors:
-            lines.append(f"- {err}")
-
-    lines.extend(["", "## Quick Notes", ""])
-    if flags.get("has_node_errors", False):
-        lines.append("- Execution had node failures; review `error_collection` evidence before grading.")
-    if flags.get("insufficient_evidence", False):
-        lines.append("- Evidence was marked insufficient; avoid overconfident scoring.")
-    if not flags.get("has_node_errors", False) and not flags.get("insufficient_evidence", False):
-        lines.append("- Detective run completed on healthy path.")
-
     return "\n".join(lines) + "\n"
 
 
@@ -111,22 +115,27 @@ def run_audit_snapshot(repo_url: str, pdf_path: str, output_dir: str) -> Dict[st
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     json_path = out_dir / f"audit_snapshot_{stamp}.json"
     md_path = out_dir / f"audit_snapshot_{stamp}.md"
+    report_path = out_dir / f"audit_report_{stamp}.md"
 
-    result = run_detective_graph(repo_url=repo_url, pdf_path=pdf_path)
+    result = run_full_audit(
+        repo_url=repo_url,
+        pdf_path=pdf_path,
+        report_output_path=str(report_path),
+    )
     json_result = _to_jsonable(result)
     json_path.write_text(json.dumps(json_result, indent=2), encoding="utf-8")
 
-    md = _build_markdown(repo_url=repo_url, pdf_path=pdf_path, result=json_result, json_path=json_path)
+    md = _build_snapshot_markdown(repo_url=repo_url, pdf_path=pdf_path, result=json_result, json_path=json_path)
     md_path.write_text(md, encoding="utf-8")
 
-    return {"json": str(json_path), "markdown": str(md_path)}
+    return {"json": str(json_path), "snapshot_markdown": str(md_path), "audit_report_markdown": str(report_path)}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run Automaton Auditor utilities.")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    snap = sub.add_parser("audit-snapshot", help="Run detective graph and write JSON + markdown snapshot.")
+    snap = sub.add_parser("audit-snapshot", help="Run full audit and write JSON + markdown artifacts.")
     snap.add_argument("--repo-url", required=True, help="Target repository URL.")
     snap.add_argument("--pdf-path", required=True, help="Path to report PDF.")
     snap.add_argument("--output-dir", default="audit/generated", help="Where to write snapshot artifacts.")
@@ -136,7 +145,8 @@ def main() -> None:
     if args.command == "audit-snapshot":
         paths = run_audit_snapshot(args.repo_url, args.pdf_path, args.output_dir)
         print(f"Snapshot JSON: {paths['json']}")
-        print(f"Snapshot Markdown: {paths['markdown']}")
+        print(f"Snapshot Markdown: {paths['snapshot_markdown']}")
+        print(f"Audit Report Markdown: {paths['audit_report_markdown']}")
 
 
 if __name__ == "__main__":

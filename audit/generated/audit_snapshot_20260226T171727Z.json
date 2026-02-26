@@ -1,0 +1,175 @@
+{
+  "repo_url": "https://github.com/eyorata/automation_auditor.git",
+  "pdf_path": "reports/Interim Submission Report.pdf",
+  "rubric_dimensions": [
+    {
+      "id": "git_forensic_analysis",
+      "name": "Git Forensic Analysis",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Run git log in reverse and inspect progression quality."
+    },
+    {
+      "id": "state_management_rigor",
+      "name": "State Management Rigor",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify Pydantic and TypedDict state with Annotated reducers."
+    },
+    {
+      "id": "graph_orchestration",
+      "name": "Graph Orchestration Architecture",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify detective fan-out and fan-in synchronization in graph wiring."
+    },
+    {
+      "id": "safe_tool_engineering",
+      "name": "Safe Tool Engineering",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Ensure sandboxed git tooling with tempfile and subprocess error handling."
+    },
+    {
+      "id": "structured_output_enforcement",
+      "name": "Structured Output Enforcement",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify judges use structured outputs bound to JudicialOpinion and retry on parse issues."
+    },
+    {
+      "id": "judicial_nuance",
+      "name": "Judicial Nuance and Dialectics",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify distinct Prosecutor/Defense/TechLead personas with conflicting reasoning styles."
+    },
+    {
+      "id": "chief_justice_synthesis",
+      "name": "Chief Justice Synthesis Engine",
+      "target_artifact": "github_repo",
+      "forensic_instruction": "Verify deterministic conflict resolution rules and markdown report serialization."
+    },
+    {
+      "id": "theoretical_depth",
+      "name": "Theoretical Depth (Documentation)",
+      "target_artifact": "pdf_report",
+      "forensic_instruction": "Check substantive explanation of Dialectical Synthesis and Fan-In/Fan-Out."
+    },
+    {
+      "id": "report_accuracy",
+      "name": "Report Accuracy (Cross-Reference)",
+      "target_artifact": "pdf_report",
+      "forensic_instruction": "Cross-reference claimed file paths in report against repository files."
+    },
+    {
+      "id": "swarm_visual",
+      "name": "Architectural Diagram Analysis",
+      "target_artifact": "pdf_images",
+      "forensic_instruction": "Confirm diagrams depict parallel detective and judge branches."
+    }
+  ],
+  "evidences": {
+    "pdf_report_analysis": [
+      {
+        "goal": "Check theoretical depth terms in report",
+        "found": true,
+        "content": "{'dialectical synthesis': False, 'fan-in': True, 'fan-out': True, 'metacognition': False, 'state synchronization': False}",
+        "location": "reports/Interim Submission Report.pdf",
+        "rationale": "Scanned report text for required conceptual vocabulary.",
+        "confidence": 0.75
+      },
+      {
+        "goal": "Extract file path claims for repo cross-reference",
+        "found": false,
+        "content": "",
+        "location": "reports/Interim Submission Report.pdf",
+        "rationale": "File paths in report are needed to detect hallucinated references.",
+        "confidence": 0.8
+      }
+    ],
+    "git_forensic_analysis": [
+      {
+        "goal": "Assess iterative git progression",
+        "found": true,
+        "content": "[\n  {\n    \"hash\": \"43078aca4e6a9effc1555313677917490ea59c94\",\n    \"timestamp\": \"2026-02-25T19:45:54+03:00\",\n    \"message\": \"Add Week 2 interim Automaton Auditor scaffold\"\n  },\n  {\n    \"hash\": \"05e5006358bed2e285d8d41fd37f2f080a02381e\",\n    \"timestamp\": \"2026-02-25T19:54:31+03:00\",\n    \"message\": \"Replace placeholder interim PDF with detailed architecture report\"\n  },\n  {\n    \"hash\": \"4d1b277e09085b2cea2df2d5b1f4de741196b73f\",\n    \"timestamp\": \"2026-02-25T20:07:51+03:00\",\n    \"message\": \"Harden detective flow with conditional error and evidence paths\"\n  },\n  {\n    \"hash\": \"983e44cd74be9b0403ad4228c43c17bde504966b\",\n    \"timestamp\": \"2026-02-25T20:14:52+03:00\",\n    \"message\": \"Add architecture and design documentation\"\n  },\n  {\n    \"hash\": \"4bf13238177da74d84e5e4655bf14e7f7bdaab06\",\n    \"timestamp\": \"2026-02-25T20:27:45+03:00\",\n    \"message\": \"Upgrade interim markdown report with architecture and risk details\"\n  },\n  {\n    \"hash\": \"4aa5ec4346aa80cf55dffa6778eb9a4b5507be5f\",\n    \"timestamp\": \"2026-02-25T20:48:41+03:00\",\n    \"message\": \"Add audit snapshot CLI and include updated report artifacts\"\n  },\n  {\n    \"hash\": \"5fba240d03e7cccd8b73949033b3a81473cd0ec9\",\n    \"timestamp\": \"2026-02-25T21:42:03+03:00\",\n    \"message\": \"Add uv lockfile for reproducible dependencies\"\n  }\n]",
+        "location": ".git/log",
+        "rationale": "Collected commit hash, timestamp, and message in reverse order.",
+        "confidence": 0.9
+      }
+    ],
+    "graph_orchestration": [
+      {
+        "goal": "Verify fan-out/fan-in graph structure",
+        "found": true,
+        "content": "{\n  \"found_graph_file\": true,\n  \"builder_name\": \"builder\",\n  \"edges\": [\n    [\n      \"START\",\n      \"repo_investigator\"\n    ],\n    [\n      \"START\",\n      \"doc_analyst\"\n    ],\n    [\n      \"START\",\n      \"vision_inspector\"\n    ],\n    [\n      \"repo_investigator\",\n      \"evidence_aggregator\"\n    ],\n    [\n      \"doc_analyst\",\n      \"evidence_aggregator\"\n    ],\n    [\n      \"vision_inspector\",\n      \"evidence_aggregator\"\n    ],\n    [\n      \"error_collector\",\n      \"END\"\n    ],\n    [\n      \"insufficient_evidence\",\n      \"END\"\n    ]\n  ],\n  \"conditional_edges_count\": 1,\n  \"fan_out_nodes\": [\n    \"START\"\n  ],\n  \"has_parallel_pattern\": true\n}",
+        "location": "src/graph.py",
+        "rationale": "AST analysis of StateGraph builder edge topology.",
+        "confidence": 0.85
+      }
+    ],
+    "state_management_rigor": [
+      {
+        "goal": "Verify typed state with reducers",
+        "found": true,
+        "content": "{\n  \"found_state_file\": true,\n  \"base_models\": [\n    \"Evidence\",\n    \"JudicialOpinion\",\n    \"CriterionResult\",\n    \"AuditReport\"\n  ],\n  \"typed_dicts\": [\n    \"AgentState\"\n  ],\n  \"reducers_detected\": {\n    \"operator.add\": true,\n    \"operator.ior\": true\n  }\n}",
+        "location": "src/state.py",
+        "rationale": "AST scan of BaseModel/TypedDict definitions and reducer usage.",
+        "confidence": 0.9
+      }
+    ],
+    "repo_file_inventory": [
+      {
+        "goal": "Enumerate repository files for cross-reference",
+        "found": true,
+        "content": "[\n  \".env.example\",\n  \".gitignore\",\n  \"pyproject.toml\",\n  \"README.md\",\n  \"rubric.json\",\n  \"uv.lock\",\n  \".git/config\",\n  \".git/description\",\n  \".git/HEAD\",\n  \".git/index\",\n  \".git/packed-refs\",\n  \"docs/architectural.md\",\n  \"docs/design_notes.md\",\n  \"reports/Interim Submission Report.pdf\",\n  \"reports/interim_report.md\",\n  \"reports/interim_report_improved.docx\",\n  \"src/cli.py\",\n  \"src/graph.py\",\n  \"src/state.py\",\n  \"src/__init__.py\",\n  \".git/hooks/applypatch-msg.sample\",\n  \".git/hooks/commit-msg.sample\",\n  \".git/hooks/fsmonitor-watchman.sample\",\n  \".git/hooks/post-update.sample\",\n  \".git/hooks/pre-applypatch.sample\",\n  \".git/hooks/pre-commit.sample\",\n  \".git/hooks/pre-merge-commit.sample\",\n  \".git/hooks/pre-push.sample\",\n  \".git/hooks/pre-rebase.sample\",\n  \".git/hooks/pre-receive.sample\",\n  \".git/hooks/prepare-commit-msg.sample\",\n  \".git/hooks/push-to-checkout.sample\",\n  \".git/hooks/sendemail-validate.sample\",\n  \".git/hooks/update.sample\",\n  \".git/info/exclude\",\n  \".git/logs/HEAD\",\n  \".git/logs/refs/heads/main\",\n  \".git/logs/refs/remotes/origin/HEAD\",\n  \".git/objects/pack/pack-802b3a28b44e6d2f57becb5c8efead1b60bf7b14.idx\",\n  \".git/objects/pack/pack-802b3a28b44e6d2f57becb5c8efead1b60bf7b14.pack\",\n  \".git/objects/pack/pack-802b3a28b44e6d2f57becb5c8efead1b60bf7b14.rev\",\n  \".git/refs/heads/main\",\n  \".git/refs/remotes/origin/HEAD\",\n  \"src/nodes/detectives.py\",\n  \"src/nodes/__init__.py\",\n  \"src/tools/doc_tools.py\",\n  \"src/tools/repo_tools.py\",\n  \"src/tools/__init__.py\"\n]",
+        "location": "/",
+        "rationale": "File inventory supports report path verification.",
+        "confidence": 1.0
+      }
+    ],
+    "vision_inspector_error": [
+      {
+        "goal": "Node error in vision_inspector",
+        "found": false,
+        "content": "vision_inspector failed: pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'",
+        "location": "vision_inspector",
+        "rationale": "Captured exception as forensic evidence to avoid silent graph failure.",
+        "confidence": 1.0
+      }
+    ],
+    "evidence_aggregation": [
+      {
+        "goal": "Aggregate detective outputs",
+        "found": true,
+        "content": "{'evidence_counts': {'pdf_report_analysis': 2, 'git_forensic_analysis': 1, 'graph_orchestration': 1, 'state_management_rigor': 1, 'repo_file_inventory': 1, 'vision_inspector_error': 1}, 'node_errors': [\"vision_inspector failed: pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'\"], 'insufficient_evidence': False, 'cross_reference': {'verified_paths': [], 'hallucinated_paths': []}, 'confidence_tier': 'high'}",
+        "location": "graph/evidence_aggregator",
+        "rationale": "Fan-in point confirms collection across parallel detective branches.",
+        "confidence": 0.95
+      }
+    ],
+    "error_collection": [
+      {
+        "goal": "Collect node failures for governed error handling",
+        "found": true,
+        "content": "vision_inspector failed: pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'",
+        "location": "graph/error_collector",
+        "rationale": "Centralized error evidence supports deterministic downgrade paths.",
+        "confidence": 1.0
+      }
+    ]
+  },
+  "opinions": [],
+  "node_errors": [
+    "vision_inspector failed: pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'"
+  ],
+  "flags": {
+    "vision_inspector_failed": true,
+    "insufficient_evidence": false,
+    "has_node_errors": true
+  },
+  "report_output_path": "audit\\generated\\audit_report_20260226T171727Z.md",
+  "trace_url": null,
+  "final_report_markdown": "# Audit Report\n\n## Executive Summary\n\nChief Justice synthesized parallel judicial opinions using deterministic rules including security override, fact supremacy, and variance re-evaluation.\n\n- Repo: `https://github.com/eyorata/automation_auditor.git`\n- Overall Score: **1.00/5.00**\n\n## Criterion Breakdown\n\n## Remediation Plan\n\nPrioritize structural reliability in graph orchestration, schema enforcement in judge outputs, and report/code cross-reference consistency.\n",
+  "final_report": {
+    "repo_url": "https://github.com/eyorata/automation_auditor.git",
+    "executive_summary": "Chief Justice synthesized parallel judicial opinions using deterministic rules including security override, fact supremacy, and variance re-evaluation.",
+    "overall_score": 1.0,
+    "criteria": [],
+    "remediation_plan": "Prioritize structural reliability in graph orchestration, schema enforcement in judge outputs, and report/code cross-reference consistency."
+  }
+}
