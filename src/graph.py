@@ -145,9 +145,12 @@ def run_full_audit(
     pdf_path: str,
     rubric_path: str = "rubric.json",
     report_output_path: str = "audit/report_onself_generated/report.md",
+    trace_url: str | None = None,
 ):
     graph = build_final_graph()
-    return graph.invoke(_initial_state(repo_url, pdf_path, rubric_path, report_output_path))
+    state = _initial_state(repo_url, pdf_path, rubric_path, report_output_path)
+    state["trace_url"] = trace_url
+    return graph.invoke(state)
 
 
 def run_detective_graph(repo_url: str, pdf_path: str, rubric_path: str = "rubric.json"):

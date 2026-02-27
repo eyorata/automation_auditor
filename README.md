@@ -105,5 +105,9 @@ Outputs:
 
 ## LangSmith Trace
 
-- Add your trace link in `.env` via `LANGSMITH_TRACE_URL`
-- Share the link in final submission notes once you run a traced end-to-end audit.
+- Set:
+  - `LANGCHAIN_API_KEY`
+  - `LANGCHAIN_TRACING_V2=true`
+  - `LANGCHAIN_PROJECT=automation-auditor`
+- Optional: set `LANGSMITH_TRACE_URL` to store the share link in generated snapshot metadata.
+- After running `audit-snapshot`, include your trace link in submission notes and `docs/langsmith_trace.md`.

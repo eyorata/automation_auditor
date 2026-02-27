@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from src.graph import run_full_audit
+from src.tracing import configure_tracing, trace_url_from_env
 
 
 MERMAID_ARCH = """```mermaid
@@ -74,6 +75,7 @@ def _build_snapshot_markdown(
     pdf_path: str,
     result: Dict[str, Any],
     json_path: Path,
+    tracing: Dict[str, Any],
 ) -> str:
     evidences = result.get("evidences", {})
     summary = _collect_evidence_summary(evidences)
@@ -87,6 +89,9 @@ def _build_snapshot_markdown(
         f"- Repo URL: `{repo_url}`",
         f"- PDF Path: `{pdf_path}`",
         f"- Raw JSON: `{json_path.as_posix()}`",
+        f"- LangSmith Tracing Enabled: `{tracing.get('enabled')}`",
+        f"- LangSmith Project: `{tracing.get('project')}`",
+        f"- LangSmith Trace URL: `{tracing.get('trace_url') or 'not set'}`",
         "",
         "## Architecture Diagram",
         "",
@@ -110,6 +115,7 @@ def _build_snapshot_markdown(
 
 
 def run_audit_snapshot(repo_url: str, pdf_path: str, output_dir: str) -> Dict[str, str]:
+    tracing = configure_tracing()
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -121,11 +127,18 @@ def run_audit_snapshot(repo_url: str, pdf_path: str, output_dir: str) -> Dict[st
         repo_url=repo_url,
         pdf_path=pdf_path,
         report_output_path=str(report_path),
+        trace_url=trace_url_from_env(),
     )
     json_result = _to_jsonable(result)
     json_path.write_text(json.dumps(json_result, indent=2), encoding="utf-8")
 
-    md = _build_snapshot_markdown(repo_url=repo_url, pdf_path=pdf_path, result=json_result, json_path=json_path)
+    md = _build_snapshot_markdown(
+        repo_url=repo_url,
+        pdf_path=pdf_path,
+        result=json_result,
+        json_path=json_path,
+        tracing=tracing,
+    )
     md_path.write_text(md, encoding="utf-8")
 
     return {"json": str(json_path), "snapshot_markdown": str(md_path), "audit_report_markdown": str(report_path)}
@@ -151,4 +164,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
