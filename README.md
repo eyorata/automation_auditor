@@ -93,6 +93,21 @@ Outputs:
 - Snapshot markdown
 - Rendered audit report markdown (serialization of `AuditReport`)
 
+## Web UI (Dynamic Rubrics)
+
+Launch the UI:
+
+```bash
+uv run streamlit run src/ui.py
+```
+
+What the UI supports:
+- Input target repository URL
+- Upload report PDF
+- Edit rubric JSON dynamically (or use `rubric.json`)
+- Run full audit graph and view final results
+- Download rendered markdown report
+
 ## Required Delivery Artifacts
 
 - Final PDF report: `reports/final_report.pdf`
