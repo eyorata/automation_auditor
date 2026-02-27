@@ -71,7 +71,10 @@ cp .env.example .env
 ```
 
 3. Set at least:
-- `OPENAI_API_KEY` (optional for deterministic fallback mode, recommended for judge LLM execution)
+- one judge provider key:
+  - `OPENAI_API_KEY` (with `OPENAI_MODEL`)
+  - or `GEMINI_API_KEY` (with `GEMINI_MODEL`)
+- optional explicit provider selector: `LLM_PROVIDER=openai|gemini`
 - `LANGCHAIN_API_KEY` and `LANGCHAIN_TRACING_V2=true` for LangSmith tracing
 
 ## Run
@@ -104,4 +107,3 @@ Outputs:
 
 - Add your trace link in `.env` via `LANGSMITH_TRACE_URL`
 - Share the link in final submission notes once you run a traced end-to-end audit.
-

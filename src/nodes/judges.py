@@ -73,12 +73,34 @@ def _judge_prompt(judge: str) -> str:
     )
 
 
+def _llm_provider() -> str | None:
+    explicit = (os.getenv("LLM_PROVIDER") or "").strip().lower()
+    if explicit in {"openai", "gemini"}:
+        return explicit
+    if os.getenv("OPENAI_API_KEY"):
+        return "openai"
+    if os.getenv("GEMINI_API_KEY"):
+        return "gemini"
+    return None
+
+
 def _call_llm_opinion(judge: str, criterion: Dict, state: AgentState) -> JudicialOpinion:
     from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import ChatOpenAI
 
-    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    llm = ChatOpenAI(model=model, temperature=0.1)
+    provider = _llm_provider()
+    if provider == "openai":
+        from langchain_openai import ChatOpenAI
+
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        llm = ChatOpenAI(model=model, temperature=0.1)
+    elif provider == "gemini":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        llm = ChatGoogleGenerativeAI(model=model, temperature=0.1)
+    else:
+        raise RuntimeError("No supported LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.")
+
     chain = ChatPromptTemplate.from_messages(
         [
             ("system", _judge_prompt(judge)),
@@ -111,7 +133,7 @@ def _judge_node(state: AgentState, judge: str) -> Dict[str, object]:
     criteria = _criteria(state)
     outputs: List[JudicialOpinion] = []
     errors: List[str] = []
-    can_call_llm = bool(os.getenv("OPENAI_API_KEY"))
+    can_call_llm = _llm_provider() is not None
 
     for criterion in criteria:
         try:
