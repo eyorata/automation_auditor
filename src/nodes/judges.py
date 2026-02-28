@@ -75,31 +75,56 @@ def _judge_prompt(judge: str) -> str:
 
 def _llm_provider() -> str | None:
     explicit = (os.getenv("LLM_PROVIDER") or "").strip().lower()
-    if explicit in {"openai", "gemini"}:
-        return explicit
-    if os.getenv("OPENAI_API_KEY"):
-        return "openai"
-    if os.getenv("GEMINI_API_KEY"):
-        return "gemini"
+    if explicit and explicit != "local":
+        # Hard guard: only local is supported.
+        return None
+    if os.getenv("LLM_URL") and os.getenv("LLM_MODEL"):
+        return "local"
     return None
+
+
+def _strict_local_only() -> bool:
+    return (os.getenv("LLM_STRICT_LOCAL", "true").strip().lower() not in {"0", "false", "no"})
+
+
+def describe_llm_runtime() -> Dict[str, str]:
+    provider = _llm_provider() or "fallback"
+    if provider == "local":
+        return {
+            "provider": "local",
+            "model": os.getenv("LLM_MODEL", ""),
+            "base_url": os.getenv("LLM_URL", ""),
+        }
+    return {
+        "provider": "fallback",
+        "model": "",
+        "base_url": "",
+        "strict_local_only": str(_strict_local_only()).lower(),
+    }
 
 
 def _call_llm_opinion(judge: str, criterion: Dict, state: AgentState) -> JudicialOpinion:
     from langchain_core.prompts import ChatPromptTemplate
 
     provider = _llm_provider()
-    if provider == "openai":
+    if provider == "local":
         from langchain_openai import ChatOpenAI
 
-        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        llm = ChatOpenAI(model=model, temperature=0.1)
-    elif provider == "gemini":
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
-        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-        llm = ChatGoogleGenerativeAI(model=model, temperature=0.1)
+        llm_url = os.getenv("LLM_URL", "http://127.0.0.1:1234/v1")
+        llm_model = os.getenv("LLM_MODEL", "qwen2.5-7b-instruct")
+        llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.1"))
+        llm_max_tokens = int(os.getenv("LLM_MAX_TOKENS", "800"))
+        llm = ChatOpenAI(
+            base_url=llm_url,
+            api_key=os.getenv("LLM_API_KEY", "lm-studio"),
+            model=llm_model,
+            temperature=llm_temperature,
+            max_tokens=llm_max_tokens,
+        )
     else:
-        raise RuntimeError("No supported LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.")
+        raise RuntimeError(
+            "Local LLM required. Set LLM_URL and LLM_MODEL (and optionally LLM_API_KEY)."
+        )
 
     chain = ChatPromptTemplate.from_messages(
         [
@@ -129,20 +154,60 @@ def _call_llm_opinion(judge: str, criterion: Dict, state: AgentState) -> Judicia
     return opinion
 
 
+def _normalize_opinion(raw: object, judge: str, criterion_id: str) -> JudicialOpinion:
+    # Some model backends return wrapper objects that contain parsed output.
+    if isinstance(raw, JudicialOpinion):
+        opinion = raw
+    elif isinstance(raw, dict):
+        opinion = JudicialOpinion.model_validate(raw)
+    elif hasattr(raw, "parsed"):
+        parsed = getattr(raw, "parsed")
+        if isinstance(parsed, JudicialOpinion):
+            opinion = parsed
+        elif isinstance(parsed, dict):
+            opinion = JudicialOpinion.model_validate(parsed)
+        else:
+            raise TypeError(f"Unsupported parsed payload type: {type(parsed)!r}")
+    else:
+        raise TypeError(f"Unsupported judge output type: {type(raw)!r}")
+
+    opinion.judge = judge  # normalize source persona
+    opinion.criterion_id = criterion_id
+    return opinion
+
+
 def _judge_node(state: AgentState, judge: str) -> Dict[str, object]:
     criteria = _criteria(state)
     outputs: List[JudicialOpinion] = []
     errors: List[str] = []
-    can_call_llm = _llm_provider() is not None
+    can_call_llm = _llm_provider() == "local"
+
+    if not can_call_llm and _strict_local_only():
+        return {
+            "node_errors": [
+                (
+                    "Local-only mode is enabled, but local LLM is not configured. "
+                    "Set LLM_PROVIDER=local with LLM_URL and LLM_MODEL."
+                )
+            ],
+            "flags": {"has_node_errors": True, "judge_output_invalid": True},
+        }
 
     for criterion in criteria:
         try:
-            opinion = _call_llm_opinion(judge, criterion, state) if can_call_llm else _fallback_opinion(
-                judge, criterion, state
-            )
+            if can_call_llm:
+                raw = _call_llm_opinion(judge, criterion, state)
+                opinion = _normalize_opinion(raw, judge=judge, criterion_id=criterion["id"])
+            else:
+                opinion = _fallback_opinion(judge, criterion, state)
             outputs.append(opinion)
         except Exception as exc:
             errors.append(f"{judge} failed on {criterion['id']}: {exc}")
+            if _strict_local_only():
+                return {
+                    "node_errors": errors,
+                    "flags": {"has_node_errors": True, "judge_output_invalid": True},
+                }
             outputs.append(_fallback_opinion(judge, criterion, state))
 
     payload: Dict[str, object] = {"opinions": outputs}

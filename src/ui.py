@@ -3,9 +3,11 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from dotenv import load_dotenv
 import streamlit as st
 
 from src.graph import run_full_audit
+from src.nodes.judges import describe_llm_runtime
 from src.tracing import configure_tracing, trace_url_from_env
 
 
@@ -27,17 +29,23 @@ def _ensure_report_path(output_dir: str) -> Path:
 
 
 def main() -> None:
+    load_dotenv(override=True)
     st.set_page_config(page_title="Automaton Auditor UI", layout="wide")
     st.title("Automaton Auditor")
     st.caption("Audit repositories with dynamic rubric control.")
 
     tracing = configure_tracing()
+    llm_runtime = describe_llm_runtime()
 
     with st.sidebar:
         st.subheader("Tracing")
         st.write(f"Enabled: `{tracing.get('enabled')}`")
         st.write(f"Project: `{tracing.get('project')}`")
         st.write(f"Trace URL: `{tracing.get('trace_url') or 'not set'}`")
+        st.subheader("LLM Runtime")
+        st.write(f"Provider: `{llm_runtime.get('provider')}`")
+        st.write(f"Model: `{llm_runtime.get('model') or '-'}`")
+        st.write(f"Base URL: `{llm_runtime.get('base_url') or '-'}`")
 
     repo_url = st.text_input("Repository URL", value="https://github.com/eyorata/automation_auditor.git")
     pdf_file = st.file_uploader("Upload Report PDF", type=["pdf"])
@@ -123,4 +131,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

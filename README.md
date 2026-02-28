@@ -71,10 +71,16 @@ cp .env.example .env
 ```
 
 3. Set at least:
+- local model (recommended for offline use):
+  - `LLM_PROVIDER=local`
+  - `LLM_URL=http://127.0.0.1:1234/v1`
+  - `LLM_MODEL=qwen2.5-7b-instruct`
+  - optional: `LLM_API_KEY=lm-studio`, `LLM_TEMPERATURE`, `LLM_MAX_TOKENS`
 - one judge provider key:
   - `OPENAI_API_KEY` (with `OPENAI_MODEL`)
   - or `GEMINI_API_KEY` (with `GEMINI_MODEL`)
-- optional explicit provider selector: `LLM_PROVIDER=openai|gemini`
+- provider selector (local-only runtime): `LLM_PROVIDER=local`
+- enforce local-only fail-fast behavior: `LLM_STRICT_LOCAL=true`
 - `LANGCHAIN_API_KEY` and `LANGCHAIN_TRACING_V2=true` for LangSmith tracing
 
 ## Run
