@@ -137,12 +137,24 @@ def chief_justice_node(state: AgentState) -> Dict[str, object]:
         )
 
     overall = mean([c.final_score for c in criteria_results]) if criteria_results else 1.0
+    has_repo_error = bool(state.get("evidences", {}).get("repo_investigator_error"))
+    has_git_evidence = bool(state.get("evidences", {}).get("git_forensic_analysis"))
+    degraded_run = has_repo_error or (not has_git_evidence)
+
+    exec_summary = (
+        "Chief Justice synthesized parallel judicial opinions using deterministic rules "
+        "including security override, fact supremacy, and variance re-evaluation."
+    )
+    if degraded_run:
+        exec_summary = (
+            "[RUN QUALITY WARNING] Repository forensic evidence is incomplete due to clone/tool errors. "
+            "Scores may be conservative and less reliable until a clean run is completed.\n\n"
+            + exec_summary
+        )
+
     report = AuditReport(
         repo_url=state["repo_url"],
-        executive_summary=(
-            "Chief Justice synthesized parallel judicial opinions using deterministic rules "
-            "including security override, fact supremacy, and variance re-evaluation."
-        ),
+        executive_summary=exec_summary,
         overall_score=float(round(overall, 2)),
         criteria=criteria_results,
         remediation_plan=(
@@ -156,4 +168,3 @@ def chief_justice_node(state: AgentState) -> Dict[str, object]:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(markdown, encoding="utf-8")
     return {"final_report": report, "final_report_markdown": markdown}
-

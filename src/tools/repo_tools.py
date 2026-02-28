@@ -1,8 +1,11 @@
 import ast
 import json
+import os
 import re
+import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List
 
@@ -10,13 +13,14 @@ from src.state import Evidence
 
 
 def _run(cmd: List[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
+    timeout_sec = int(os.getenv("GIT_TIMEOUT_SEC", "180"))
     return subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
         check=False,
         text=True,
         capture_output=True,
-        timeout=45,
+        timeout=timeout_sec,
     )
 
 
@@ -25,13 +29,52 @@ def clone_repo(repo_url: str, destination: Path) -> Path:
         raise ValueError("Unsupported repo URL format. Expected a GitHub HTTPS URL.")
     destination.mkdir(parents=True, exist_ok=True)
     repo_path = destination / "target_repo"
-    result = _run(["git", "clone", "--depth", "100", repo_url, str(repo_path)])
-    if result.returncode != 0:
+    retries = int(os.getenv("GIT_CLONE_RETRIES", "3"))
+    retry_delay = float(os.getenv("GIT_CLONE_RETRY_DELAY_SEC", "2.0"))
+    last_stderr = ""
+
+    for attempt in range(1, retries + 1):
+        result = _run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "100",
+                "--single-branch",
+                "--no-tags",
+                repo_url,
+                str(repo_path),
+            ]
+        )
+        if result.returncode == 0:
+            return repo_path
+
         stderr = result.stderr.strip()
+        last_stderr = stderr
+
+        # Fast-fail on non-transient auth/repo errors.
         if "Authentication failed" in stderr or "Repository not found" in stderr:
             raise RuntimeError(f"git clone auth/repo error: {stderr}")
-        raise RuntimeError(f"git clone failed: {stderr}")
-    return repo_path
+
+        # Retry transient transport errors.
+        transient = any(
+            marker in stderr
+            for marker in [
+                "RPC failed",
+                "Connection was reset",
+                "early EOF",
+                "timed out",
+                "unexpected disconnect",
+            ]
+        )
+        if transient and attempt < retries:
+            if repo_path.exists():
+                shutil.rmtree(repo_path, ignore_errors=True)
+            time.sleep(retry_delay)
+            continue
+        break
+
+    raise RuntimeError(f"git clone failed after {retries} attempt(s): {last_stderr}")
 
 
 def extract_git_history(path: str) -> List[Dict[str, str]]:
